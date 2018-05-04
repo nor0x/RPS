@@ -1,0 +1,20 @@
+﻿[
+  {
+    "Id": 0,
+    "Name": "Rock",
+    "Emoji": "👊",
+    "Beats": [ 2 ]
+  },
+  {
+    "Id": 1,
+    "Name": "Paper",
+    "Emoji": "🤚",
+    "Beats": [ 0 ]
+  },
+  {
+    "Id": 2,
+    "Name": "Scissors",
+    "Emoji": "✌",
+    "Beats": [ 1 ]
+  }
+]

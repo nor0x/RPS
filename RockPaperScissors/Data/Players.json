@@ -1,0 +1,20 @@
+﻿[
+  {
+    "Id": 0,
+    "Name": "Human",
+    "Description": "...is prompted for a selection of Rock, Paper or Scissors for each turn",
+    "AvatarPath": "ms-appx:///Assets/Images/human.svg"
+  },
+  {
+    "Id": 1,
+    "Name": "Random Computer",
+    "Description": "...selects one of Rock, Paper or Scissors at random for each turn",
+    "AvatarPath": "ms-appx:///Assets/Images/dice.svg"
+  },
+  {
+    "Id": 2,
+    "Name": "Skynet",
+    "Description": "...always selects the choice that would have beaten its last choice",
+    "AvatarPath": "ms-appx:///Assets/Images/robot.svg"
+  }
+]
