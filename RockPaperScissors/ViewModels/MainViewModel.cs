@@ -23,12 +23,19 @@ namespace RockPaperScissors.ViewModels
         Move player2Move;
         Player player2;
         string playerName = string.Empty;
+        string versusText = string.Empty;
+        string fightButtonText = string.Empty;
         int numberOfRounds = 3;
         bool gameRunning = false;
-        Brush player1Color = new SolidColorBrush(Colors.White);
-        Brush player2Color = new SolidColorBrush(Colors.White);
+        bool multiplayer = false;
+        bool player1MoveVisible;
+        bool player2MoveVisible;
+        bool fightButtonVisible;
 
-        Game currentGame;
+        Brush player1Color = Constants.IdleColor;
+        Brush player2Color = Constants.IdleColor;
+        RoundResult result;
+
         enum GameMode
         {
             RPS,
@@ -58,7 +65,19 @@ namespace RockPaperScissors.ViewModels
             get => playerName;
             set => SetField(ref playerName, value);
         }
-        
+
+        public string FightButtonText
+        {
+            get => fightButtonText;
+            set => SetField(ref fightButtonText, value);
+        }
+
+        public string VersusText
+        {
+            get => versusText;
+            set => SetField(ref versusText, value);
+        }
+
         public int NumberOfRounds
         {
             get => numberOfRounds;
@@ -71,6 +90,30 @@ namespace RockPaperScissors.ViewModels
             set => SetField(ref gameRunning, value);
         }
 
+        public bool Player1MoveVisible
+        {
+            get => player1MoveVisible;
+            set => SetField(ref player1MoveVisible, value);
+        }
+
+        public bool Player2MoveVisible
+        {
+            get => player2MoveVisible;
+            set => SetField(ref player2MoveVisible, value);
+        }
+
+        public bool FightButtonVisible
+        {
+            get => fightButtonVisible;
+            set => SetField(ref fightButtonVisible, value);
+        }
+
+        public bool Multiplayer
+        {
+            get => multiplayer;
+            set => SetField(ref multiplayer, value);
+        }
+
         public Brush Player1Color
         {
             get => player1Color;
@@ -81,7 +124,7 @@ namespace RockPaperScissors.ViewModels
             get => player2Color;
             set => SetField(ref player2Color, value);
         }
-    
+
         public Move Player1Move
         {
             get => player1Move;
@@ -112,6 +155,7 @@ namespace RockPaperScissors.ViewModels
             string jsonText = FileIO.ReadTextAsync(jsonFile).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
             var playerList = JsonConvert.DeserializeObject<List<Player>>(jsonText);
             Players = playerList;
+            Player2 = Players.First();
         }
         private void LoadMoves()
         {
@@ -142,47 +186,114 @@ namespace RockPaperScissors.ViewModels
 
         public void StartResetGame()
         {
-            int i = 0;
-            if (gameRunning)
+            if (GameRunning)
             {
                 //reset
-                gameRunning = false;
+                GameRunning = false;
                 Rounds = null;
-
+                Moves = null;
             }
             else
             {
                 //start
                 LoadMoves();
-                gameRunning = true;
+                GameRunning = true;
                 Rounds = new ObservableCollection<Round>();
+                VersusText = "pick a move";
+                if (Player2.Id == 0)
+                {
+                    Multiplayer = true;
+                }
+                else
+                {
+                    Multiplayer = false;
+                }
             }
         }
 
-        public void StartRound()
+        public void Player1MoveChanged()
         {
-            GetPlayer2Move();
-            CheckMoves();
-            
+            Player1MoveVisible = true;
+            VersusText = "vs.";
+            FightButtonText = "Fight";
+            if (Player2Move != null)
+            {
+                FightButtonVisible = true;
+            }
+            if (Player2.Id != 0)
+            {
+                FightButtonVisible = true;
+            }
+        }
+
+        public void Player2MoveChanged()
+        {
+            Player2MoveVisible = true;
+            VersusText = "vs.";
+            if (Player1Move != null)
+            {
+                FightButtonText = "Fight";
+                FightButtonVisible = true;
+            }
         }
 
         public void NextRound()
         {
-            Round currentRound = new Round();
-            currentRound.Player1Color = Player1Color;
-            currentRound.Player2Color = Player2Color;
-            currentRound.Player1Move = Player1Move;
-            currentRound.Player2Move = Player2Move;
-            Rounds.Add(currentRound);
+            //VersusText = "vs.";
+            if (Player2Move == null)
+            {
+                GetPlayer2Move();
+                CheckMoves();
+                FightButtonText = "Next Round";
+            }
+            else
+            {
+                CheckMoves();
+                Round currentRound = new Round();
+                currentRound.Player1Color = Player1Color;
+                currentRound.Player2Color = Player2Color;
+                currentRound.Player1Move = Player1Move;
+                currentRound.Player2Move = Player2Move;
+                currentRound.Result = result;
+                Rounds.Add(currentRound);
+                Player1Color = Constants.IdleColor;
+                Player2Color = Constants.IdleColor;
+                Player1Move = null;
+                Player2Move = null;
 
-            Player1Color = Constants.IdleColor;
-            Player2Color = Constants.IdleColor;
-            Player1Move = null;
-            Player2Move = null;
+                if (Rounds.Count == NumberOfRounds)
+                {
+                    Player1Color = Constants.IdleColor;
+                    Player2Color = Constants.IdleColor;
+                    //check if draw
+                    int player1Wins = Rounds.Where(r => r.Result == RoundResult.Player1).Count();
+                    int player2Wins = Rounds.Where(r => r.Result == RoundResult.Player2).Count();
+                    int draws = Rounds.Where(r => r.Result == RoundResult.Player2).Count();
+                    if (player1Wins > player2Wins)
+                    {
+                        VersusText = $"{PlayerName} Wins 🎉";
+                    }
+                    else if (player1Wins < player2Wins)
+                    {
+                        VersusText = "Player 2 Wins 🎉";
+                    }
+                    else if (player1Wins == player2Wins || draws == NumberOfRounds)
+                    {
+                        VersusText = "It's a draw 🙌 Start a new Game";
+                    }
+                    GameRunning = false;
+                    Moves = null;
+                }
+                FightButtonVisible = false;
+                Player1MoveVisible = false;
+                Player2MoveVisible = false;
+            }
+
         }
 
         void GetPlayer2Move()
         {
+            Player2MoveVisible = true;
             Random r = new Random();
             switch (Player2.Id)
             {
@@ -215,18 +326,21 @@ namespace RockPaperScissors.ViewModels
                 //player1 wins
                 Player1Color = Constants.WinColor;
                 Player2Color = Constants.LooseColor;
+                result = RoundResult.Player1;
             }
             else if (Player2Move.Beats.Contains(Player1Move.Id))
             {
                 //player2 wins
                 Player1Color = Constants.LooseColor;
                 Player2Color = Constants.WinColor;
+                result = RoundResult.Player2;
             }
             else
             {
                 //draw
                 Player1Color = Constants.DrawColor;
                 Player2Color = Constants.DrawColor;
+                result = RoundResult.Draw;
             }
         }
     }

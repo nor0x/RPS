@@ -7,10 +7,15 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:RockPaperScissors.ViewModels"
     xmlns:models="using:RockPaperScissors.Models"
+    xmlns:converters="using:Microsoft.Toolkit.Uwp.UI.Converters"
     mc:Ignorable="d">
     <Page.DataContext>
         <vm:MainViewModel />
     </Page.DataContext>
+    <Page.Resources>
+        <converters:BoolToObjectConverter x:Key="BoolToVisibilityConverter" TrueValue="Visible" FalseValue="Collapsed"/>
+        <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
+    </Page.Resources>
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <SplitView x:Name="splitView" PaneBackground="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}" IsPaneOpen="true"  OpenPaneLength="360" CompactPaneLength="20" DisplayMode="CompactInline">
             <SplitView.Pane>
@@ -21,10 +26,10 @@
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0">
                         <TextBlock Text="Welcome 👊✋✌" x:Name="PaneHeader" HorizontalAlignment="Center" FontSize="30"/>
-                        <TextBox x:Name="NameTextBox" Header="Name: " Grid.Column="1" Text="{x:Bind ViewModel.PlayerName, Mode=TwoWay}" PlaceholderText="enter name" HorizontalAlignment="Stretch" />
-                        <Slider Header="Number of rounds: " Value="{x:Bind ViewModel.NumberOfRounds, Mode=TwoWay}" Minimum="1" Maximum="5" TickFrequency="1" TickPlacement="BottomRight" />
+                        <TextBox x:Name="NameTextBox" Header="Name: " Grid.Column="1" Text="{x:Bind ViewModel.PlayerName, Mode=TwoWay}" PlaceholderText="enter name" HorizontalAlignment="Stretch" IsEnabled="{x:Bind ViewModel.GameRunning, Converter={StaticResource BoolNegationConverter}, Mode=TwoWay}" />
+                        <Slider Header="Number of rounds: " Value="{x:Bind ViewModel.NumberOfRounds, Mode=TwoWay}" Minimum="1" Maximum="5" TickFrequency="1" TickPlacement="BottomRight" IsEnabled="{x:Bind ViewModel.GameRunning, Converter={StaticResource BoolNegationConverter}, Mode=TwoWay}" />
                         <TextBlock Text="Opponent:" />
-                        <FlipView ItemsSource="{x:Bind ViewModel.Players, Mode=OneWay}" Height="300" SelectedItem="{x:Bind ViewModel.Player2, Mode=TwoWay}">
+                        <FlipView ItemsSource="{x:Bind ViewModel.Players, Mode=TwoWay}" Height="300" SelectedItem="{x:Bind ViewModel.Player2, Mode=TwoWay}" IsEnabled="{x:Bind ViewModel.GameRunning, Converter={StaticResource BoolNegationConverter}, Mode=TwoWay}">
                             <FlipView.ItemTemplate>
                                 <DataTemplate x:DataType="models:Player">
                                     <Grid>
@@ -44,10 +49,10 @@
                             </FlipView.ItemTemplate>
                         </FlipView>
                         <TextBlock Text="Mode:" />
-                        <RadioButton Content="👊✋✌" Checked="{x:Bind ViewModel.RPSChecked}" FontSize="28" GroupName="GameMode" IsChecked="True" />
-                        <RadioButton Content="👊✋✌👌🖖" Checked="{x:Bind ViewModel.RPSLSChecked}" FontSize="28" GroupName="GameMode" />
+                        <RadioButton Content="👊✋✌" Checked="{x:Bind ViewModel.RPSChecked}" FontSize="28" GroupName="GameMode" IsChecked="True" IsEnabled="{x:Bind ViewModel.GameRunning, Converter={StaticResource BoolNegationConverter}, Mode=TwoWay}" />
+                        <RadioButton Content="👊✋✌👌🖖" Checked="{x:Bind ViewModel.RPSLSChecked}" FontSize="28" GroupName="GameMode" IsEnabled="{x:Bind ViewModel.GameRunning, Converter={StaticResource BoolNegationConverter}, Mode=TwoWay}" />
                     </StackPanel>
-                    <Button Grid.Row="1" Content="Start" VerticalAlignment="Bottom"  HorizontalAlignment="Stretch" Click="{x:Bind ViewModel.StartResetGame}"/>
+                    <Button Grid.Row="1" Content="Start" VerticalAlignment="Bottom"  HorizontalAlignment="Stretch" Click="{x:Bind ViewModel.StartResetGame}" IsEnabled="{x:Bind ViewModel.GameRunning, Converter={StaticResource BoolNegationConverter}, Mode=TwoWay}"/>
                 </Grid>
             </SplitView.Pane>
 
@@ -57,8 +62,8 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <StackPanel Orientation="Horizontal" Grid.Row="0">
-                    <ListView ItemsSource="{x:Bind ViewModel.Moves, Mode=TwoWay}" Height="100" SelectionMode="Single" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.IsHorizontalRailEnabled="True" ScrollViewer.HorizontalScrollBarVisibility="Visible" SelectedItem="{x:Bind ViewModel.Player1Move, Mode=TwoWay}">
+                <StackPanel Grid.Row="0">
+                    <ListView ItemsSource="{x:Bind ViewModel.Moves, Mode=TwoWay}" SelectionChanged="{x:Bind ViewModel.Player1MoveChanged}" Height="100" SelectionMode="Single" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.IsHorizontalRailEnabled="True" ScrollViewer.HorizontalScrollBarVisibility="Visible" SelectedItem="{x:Bind ViewModel.Player1Move, Mode=TwoWay}">
                     <ListView.ItemsPanel>
                         <ItemsPanelTemplate>
                             <ItemsWrapGrid MaximumRowsOrColumns="1" Orientation="Vertical" />
@@ -75,7 +80,23 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                    <Button Content="Play" Click="{x:Bind ViewModel.StartRound}" />
+                    <ListView ItemsSource="{x:Bind ViewModel.Moves, Mode=TwoWay}" SelectionChanged="{x:Bind ViewModel.Player2MoveChanged}" Height="100" Visibility="{x:Bind ViewModel.Multiplayer, Converter={StaticResource BoolToVisibilityConverter}, Mode=TwoWay}" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.IsHorizontalRailEnabled="True" ScrollViewer.HorizontalScrollBarVisibility="Visible" SelectedItem="{x:Bind ViewModel.Player2Move, Mode=TwoWay}">
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid MaximumRowsOrColumns="1" Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Move">
+                                <Grid Width="100" VerticalAlignment="Stretch">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="{x:Bind Emoji}" FontSize="40" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{x:Bind Name}" FontSize="20" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                 </StackPanel>
                 <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
@@ -88,13 +109,13 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Border Grid.Row="0" Grid.Column="0" Background="{x:Bind ViewModel.Player1Color, Mode=TwoWay}" Width="400">
-                        <TextBlock Text="{x:Bind ViewModel.Player1Move.Emoji, Mode=TwoWay}" FontSize="300" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        <TextBlock Text="{x:Bind ViewModel.Player1Move.Emoji, Mode=TwoWay}" Visibility="{x:Bind ViewModel.Player1MoveVisible, Converter={StaticResource BoolToVisibilityConverter}, Mode=TwoWay}" FontSize="300" VerticalAlignment="Center" HorizontalAlignment="Center" />
                     </Border>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="vs." FontSize="50" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    <Border Grid.Row="0" Grid.Column="2" Background="{x:Bind ViewModel.Player2Color, Mode=TwoWay}" Width="400">
-                        <TextBlock  Text="{x:Bind ViewModel.Player2Move.Emoji, Mode=TwoWay}" FontSize="300" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind ViewModel.VersusText, Mode=TwoWay}" FontSize="50" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <Border Grid.Row="0" Grid.Column="2" Background="{x:Bind ViewModel.Player2Color, Mode=TwoWay}" Width="400" >
+                        <TextBlock  Text="{x:Bind ViewModel.Player2Move.Emoji, Mode=TwoWay}" Visibility="{x:Bind ViewModel.Player2MoveVisible, Converter={StaticResource BoolToVisibilityConverter}, Mode=TwoWay}" FontSize="300" VerticalAlignment="Center" HorizontalAlignment="Center" />
                     </Border>
-                    <Button Grid.Column="1" Grid.Row="1" Content="Next Round" Click="{x:Bind ViewModel.NextRound}" />
+                    <Button Grid.Column="1" Grid.Row="1" Content="{x:Bind ViewModel.FightButtonText, Mode=TwoWay}" Click="{x:Bind ViewModel.NextRound}" Visibility="{x:Bind ViewModel.FightButtonVisible, Converter={StaticResource BoolToVisibilityConverter}, Mode=TwoWay}" />
                 </Grid>
                 <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Rounds, Mode=TwoWay}" Height="100" SelectionMode="None" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.IsHorizontalRailEnabled="True" ScrollViewer.HorizontalScrollBarVisibility="Visible" >
                     <ListView.ItemsPanel>

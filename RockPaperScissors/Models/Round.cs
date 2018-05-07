@@ -13,5 +13,12 @@ namespace RockPaperScissors.Models
         public Move Player2Move { get; set; }
         public Brush Player1Color { get; set; }
         public Brush Player2Color { get; set; }
+        public RoundResult Result { get; set; } 
+    }
+    public enum RoundResult
+    {
+        Player1,
+        Player2,
+        Draw
     }
 }
