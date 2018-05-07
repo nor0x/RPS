@@ -19,7 +19,7 @@ namespace RockPaperScissors.Data
         public static Brush IdleColor = new SolidColorBrush(Colors.White);
 
     }
-    enum GameMode
+    public enum GameMode
     {
         RPS,
         RPSLS
